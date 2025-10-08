@@ -205,3 +205,40 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project-specific ignores
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+
+# Repository metadata (note: git normally ignores its own .git directory)
+.git/
+
+# Virtualenvs (already mostly covered above but kept for clarity)
+# .venv
+# venv
+
+# Project output / folders
+source/
+model_result/
+
+# Python cache patterns: explicit recursive cache (top-level __pycache__/ exists already above)
+**/__pycache__/
+
+# MATLAB / data files used in tests
+rnn_test_*.mat
+test_sample_source1.mat
+train_sample_source1.mat
+
+# Log files: specific names (general *.log already ignored above)
+output.log
+outputs_*.log
+
+# Train/test sample patterns
+train_sample_*
+test_sample_*
+
+# Python compiled files (covered by existing pattern but included for clarity)
+*.pyc
