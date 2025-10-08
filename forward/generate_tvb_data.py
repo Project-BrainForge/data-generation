@@ -84,6 +84,11 @@ def main(region_id):
                     ),
                     {"time": t, "data": data, "A": use_A},
                 )
+
+                print(
+                    f"Processed region {region_id}, mean_iter {iter_m}, file {iii + 1}/10"
+                )
+
     print("Time for", region_id, time.time() - start_time)
 
 
