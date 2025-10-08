@@ -4,7 +4,7 @@ function process_raw_nmm(varargin)
 % %%%%%%%%%%%%%% SETUP PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 p = inputParser;
 addParameter(p,'filename','spikes',@ischar);
-addParameter(p,'leadfield_name','leadfield_32_20k.mat', @ischar);
+addParameter(p,'leadfield_name','leadfield_75_20k.mat', @ischar);
 parse(p, varargin{:})
 filename = p.Results.filename;
 headmodel = load(['../anatomy/' p.Results.leadfield_name]);
