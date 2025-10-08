@@ -8,7 +8,7 @@ addParameter(p,'leadfield_name','leadfield_75_20k.mat', @ischar);
 parse(p, varargin{:})
 filename = p.Results.filename;
 headmodel = load(['../anatomy/' p.Results.leadfield_name]);
-fwd = headmodel.downsampled_fwd;
+fwd = headmodel.fwd;
 savefile_path = '../source/';
 
 % -------------------------------------------------------------------------
