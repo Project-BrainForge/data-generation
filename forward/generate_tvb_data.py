@@ -79,7 +79,7 @@ def main(region_id):
                 # data = data[:, :994]
 
                 savemat(
-                    "./source/raw_nmm/a{}/mean_iter_{}_a_iter_{}_{}.mat".format(
+                    "../source/raw_nmm/a{}/mean_iter_{}_a_iter_{}_{}.mat".format(
                         region_id, iter_m, region_id, iii
                     ),
                     {"time": t, "data": data, "A": use_A},
