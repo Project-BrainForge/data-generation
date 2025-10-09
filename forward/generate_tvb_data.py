@@ -60,7 +60,7 @@ def main(region_id):
             ).configure()
 
             # run 50s of simulation, cut it into 10 pieces, 5s each. (Avoid saving large files)
-            for iii in range(5):
+            for iii in range(10):
                 print(
                     f"Processing region {region_id}, mean_iter {iter_m}, file {iii + 1}/10"
                 )
