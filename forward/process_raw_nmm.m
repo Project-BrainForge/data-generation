@@ -1,4 +1,5 @@
 function process_raw_nmm(varargin)
+pkg load signal; 
 % Scan through the raw NMM data to find the spike data
 
 % %%%%%%%%%%%%%% SETUP PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -129,6 +130,23 @@ function save_spikes_(spike_data, savefile_path, previous_iter_spike_num)
 end
 
 
+function local_max = islocalmax_octave(data)
+% Octave-compatible implementation of islocalmax
+% Finds local maxima along the first dimension (rows) of a matrix
+    [rows, cols] = size(data);
+    local_max = false(rows, cols);
+    
+    for col = 1:cols
+        for row = 2:(rows-1)
+            % A point is a local maximum if it's greater than its neighbors
+            if data(row, col) > data(row-1, col) && data(row, col) > data(row+1, col)
+                local_max(row, col) = true;
+            end
+        end
+    end
+end
+
+
 function [spike_time, spike_chan] = find_spike_time(nmm)
 % Process raw tvb output to find the spike peak time.
 %
@@ -140,7 +158,7 @@ function [spike_time, spike_chan] = find_spike_time(nmm)
 
     spikes_nmm = nmm;
     spikes_nmm(nmm < 8) = 0;                                               % find the spiking activity stronger than the background
-    local_max = islocalmax(spikes_nmm);                                    % find the peak
+    local_max = islocalmax_octave(spikes_nmm);                             % find the peak
     [spike_time, spike_chan] = find(local_max);
     [spike_time, sort_ind] = sort(spike_time);
     spike_chan = spike_chan(sort_ind);                                     % sort the activity based on time
