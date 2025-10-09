@@ -4,3 +4,4 @@ mne
 h5py
 tvb
 scipy
+tqdm
