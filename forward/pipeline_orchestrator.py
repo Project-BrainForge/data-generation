@@ -17,6 +17,9 @@ import shutil
 import argparse
 import time
 from pathlib import Path
+from google.colab import auth
+from googleapiclient.discovery import build
+from copy_to_drive import upload_folder_to_drive
 
 
 class PipelineOrchestrator:
@@ -26,6 +29,7 @@ class PipelineOrchestrator:
         end_region,
         filename="spikes",
         leadfield_name="leadfield_75_20k.mat",
+        drive_service=None,
     ):
         """
         Initialize the pipeline orchestrator
@@ -43,6 +47,9 @@ class PipelineOrchestrator:
         self.base_path = Path(__file__).parent.parent
         self.raw_data_path = self.base_path / "source" / "raw_nmm"
         self.processed_data_path = self.base_path / "source" / f"nmm_{self.filename}"
+        self.drive_service = drive_service
+        self.destination_folder_id = "1Ed9INWZYUY__BklqiDtta5MmY7cY6KeT"
+
 
     def check_processed_spikes_exist(self, region_id):
         """
@@ -333,6 +340,7 @@ class PipelineOrchestrator:
 
             # Step 3: Delete raw data to save disk space (only if processing succeeded)
             self.delete_raw_data(region_id)
+            upload_folder_to_drive(self.processed_data_path / f"a{region_id}", self.destination_folder_id, self.drive_service)
 
             successful_regions.append(region_id)
 
@@ -365,6 +373,10 @@ class PipelineOrchestrator:
 
 
 def main():
+    auth.authenticate_user()
+    drive_service = build('drive', 'v3')
+    print("✅ Google Drive API connected.")
+
     parser = argparse.ArgumentParser(
         description="DeepSIF Data Generation Pipeline Orchestrator",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -420,6 +432,7 @@ Examples:
         end_region=args.end_region,
         filename=args.filename,
         leadfield_name=args.leadfield,
+        drive_service=drive_service,
     )
 
     orchestrator.run()
