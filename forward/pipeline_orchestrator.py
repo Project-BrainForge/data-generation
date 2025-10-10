@@ -19,6 +19,9 @@ import time
 from pathlib import Path
 from google.colab import auth
 from googleapiclient.discovery import build
+
+# Add parent directory to Python path to import copy_to_drive
+sys.path.append(str(Path(__file__).parent.parent))
 from copy_to_drive import upload_folder_to_drive
 
 
