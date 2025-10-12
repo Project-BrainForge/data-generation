@@ -2,19 +2,18 @@ from torch.utils.data import Dataset
 import numpy as np
 from scipy.io import loadmat
 from scipy import interpolate
-import h5py
 from utils import add_white_noise, ispadding
 import random
 
 
 def load_octave_text_file(file_path):
     """Load Octave text format file
-    
+
     Parameters
     ----------
     file_path : str
         Path to Octave text file
-        
+
     Returns
     -------
     dict
@@ -25,36 +24,38 @@ def load_octave_text_file(file_path):
     current_type = None
     current_dims = None
     current_data = []
-    
-    with open(file_path, 'r') as f:
+
+    with open(file_path, "r") as f:
         for line in f:
             line = line.strip()
-            
+
             # Skip comments and empty lines
-            if line.startswith('#'):
-                if 'name:' in line:
+            if line.startswith("#"):
+                if "name:" in line:
                     # Save previous variable if exists
                     if current_var is not None and current_data:
-                        if current_type == 'matrix':
+                        if current_type == "matrix":
                             arr = np.array(current_data)
                             if current_dims is not None and len(current_dims) > 1:
-                                arr = arr.reshape(current_dims, order='F')  # Fortran order for MATLAB compatibility
+                                arr = arr.reshape(
+                                    current_dims, order="F"
+                                )  # Fortran order for MATLAB compatibility
                             data[current_var] = arr
-                        elif current_type == 'scalar':
+                        elif current_type == "scalar":
                             data[current_var] = current_data[0] if current_data else 0
-                    
+
                     # Start new variable
-                    current_var = line.split('name:')[1].strip()
+                    current_var = line.split("name:")[1].strip()
                     current_data = []
                     current_dims = None
-                elif 'type:' in line:
-                    current_type = line.split('type:')[1].strip()
-                elif 'ndims:' in line or 'rows:' in line or 'columns:' in line:
+                elif "type:" in line:
+                    current_type = line.split("type:")[1].strip()
+                elif "ndims:" in line or "rows:" in line or "columns:" in line:
                     continue
                 continue
-            
+
             # Parse dimensions
-            if current_dims is None and current_type == 'matrix':
+            if current_dims is None and current_type == "matrix":
                 try:
                     dims = [int(x) for x in line.split()]
                     if len(dims) >= 1:
@@ -62,9 +63,9 @@ def load_octave_text_file(file_path):
                         continue
                 except ValueError:
                     pass
-            
+
             # Parse data values
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 try:
                     values = [float(x) for x in line.split()]
                     current_data.extend(values)
@@ -74,28 +75,30 @@ def load_octave_text_file(file_path):
                         current_data.append(float(line))
                     except ValueError:
                         pass
-        
+
         # Save last variable
         if current_var is not None and current_data:
-            if current_type == 'matrix':
+            if current_type == "matrix":
                 arr = np.array(current_data)
                 if current_dims is not None and len(current_dims) > 1:
-                    arr = arr.reshape(current_dims, order='F')  # Fortran order for MATLAB compatibility
+                    arr = arr.reshape(
+                        current_dims, order="F"
+                    )  # Fortran order for MATLAB compatibility
                 data[current_var] = arr
-            elif current_type == 'scalar':
+            elif current_type == "scalar":
                 data[current_var] = current_data[0] if current_data else 0
-    
+
     return data
 
 
 def load_mat_file(file_path):
     """Load MAT file, handling v7, v7.3 (HDF5), and Octave text formats
-    
+
     Parameters
     ----------
     file_path : str
         Path to MAT file
-        
+
     Returns
     -------
     dict
@@ -106,38 +109,14 @@ def load_mat_file(file_path):
         return loadmat(file_path)
     except (ValueError, NotImplementedError, OSError):
         pass
-    
-    # Try h5py (for MAT files v7.3)
-    try:
-        data = {}
-        with h5py.File(file_path, 'r') as f:
-            for key in f.keys():
-                if not key.startswith('__'):
-                    # Handle different data types
-                    dataset = f[key]
-                    if isinstance(dataset, h5py.Dataset):
-                        # Load the data and transpose if needed (MATLAB uses column-major)
-                        arr = dataset[:]
-                        # Handle references
-                        if arr.dtype == np.object_:
-                            data[key] = arr
-                        else:
-                            # Transpose for MATLAB compatibility
-                            if arr.ndim == 2:
-                                data[key] = arr.T
-                            else:
-                                data[key] = arr
-                    else:
-                        data[key] = dataset
-        return data
-    except (OSError, Exception):
-        pass
-    
+
     # Try Octave text format
     try:
         return load_octave_text_file(file_path)
     except Exception as e:
-        raise ValueError(f"Could not load file {file_path}. Tried MATLAB v7, v7.3 (HDF5), and Octave text formats. Error: {e}")
+        raise ValueError(
+            f"Could not load file {file_path}. Tried MATLAB v7, v7.3 (HDF5), and Octave text formats. Error: {e}"
+        )
 
 
 class SpikeEEGBuild(Dataset):
@@ -238,12 +217,14 @@ class SpikeEEGBuild(Dataset):
                     scale_ratio_val = self.dataset_meta["scale_ratio"][index][kk][
                         random.randint(0, self.num_scale_ratio - 1)
                     ]
-                
+
                 # Handle NaN scale_ratio values by using a default value
                 if np.isnan(scale_ratio_val):
-                    print(f"Warning: scale_ratio is NaN for sample {index}, using default value 30.0")
+                    print(
+                        f"Warning: scale_ratio is NaN for sample {index}, using default value 30.0"
+                    )
                     scale_ratio_val = 30.0
-                
+
                 ssig = ssig / np.max(ssig) * scale_ratio_val
             else:
                 print(f"Skipping source {kk} with all zeros signal")
@@ -397,7 +378,7 @@ class SpikeEEGBuild(Dataset):
         # a0: nmm_1, nmm_2, nmm_3 (3 files)
         # a1: nmm_1 to nmm_13 (13 files)
         # Total: 16 files
-        
+
         # Create a list of all available spikes files
         available_files = []
         # a0 files
@@ -406,11 +387,11 @@ class SpikeEEGBuild(Dataset):
         # a1 files
         for i in range(1, 14):
             available_files.append(("a1", i))
-        
+
         # Cycle through available files based on nmm_idx
         file_idx = nmm_idx % len(available_files)
         a_dir, file_num = available_files[file_idx]
-        
+
         file_path = f"source/nmm_spikes/{a_dir}/nmm_{file_num}.mat"
         try:
             data = load_mat_file(file_path)
@@ -418,9 +399,7 @@ class SpikeEEGBuild(Dataset):
 
             # Ensure correct shape (500, 994)
             if spikes_data.shape != (500, 994):
-                print(
-                    f"Warning: Spikes data shape {spikes_data.shape} != (500, 994)"
-                )
+                print(f"Warning: Spikes data shape {spikes_data.shape} != (500, 994)")
                 # Truncate or pad as needed
                 if spikes_data.shape[1] > 994:
                     spikes_data = spikes_data[:, :994]
@@ -436,9 +415,7 @@ class SpikeEEGBuild(Dataset):
                     new_time = np.linspace(0, 1, 500)
                     resampled_data = np.zeros((500, spikes_data.shape[1]))
                     for region in range(spikes_data.shape[1]):
-                        f = interpolate.interp1d(
-                            original_time, spikes_data[:, region]
-                        )
+                        f = interpolate.interp1d(original_time, spikes_data[:, region])
                         resampled_data[:, region] = f(new_time)
                     spikes_data = resampled_data
 

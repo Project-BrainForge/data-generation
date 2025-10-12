@@ -23,12 +23,12 @@ from tqdm import tqdm
 
 def load_octave_text_file(file_path):
     """Load Octave text format file
-    
+
     Parameters
     ----------
     file_path : str
         Path to Octave text file
-        
+
     Returns
     -------
     dict
@@ -39,36 +39,38 @@ def load_octave_text_file(file_path):
     current_type = None
     current_dims = None
     current_data = []
-    
-    with open(file_path, 'r') as f:
+
+    with open(file_path, "r") as f:
         for line in f:
             line = line.strip()
-            
+
             # Skip comments and empty lines
-            if line.startswith('#'):
-                if 'name:' in line:
+            if line.startswith("#"):
+                if "name:" in line:
                     # Save previous variable if exists
                     if current_var is not None and current_data:
-                        if current_type == 'matrix':
+                        if current_type == "matrix":
                             arr = np.array(current_data)
                             if current_dims is not None and len(current_dims) > 1:
-                                arr = arr.reshape(current_dims, order='F')  # Fortran order for MATLAB compatibility
+                                arr = arr.reshape(
+                                    current_dims, order="F"
+                                )  # Fortran order for MATLAB compatibility
                             data[current_var] = arr
-                        elif current_type == 'scalar':
+                        elif current_type == "scalar":
                             data[current_var] = current_data[0] if current_data else 0
-                    
+
                     # Start new variable
-                    current_var = line.split('name:')[1].strip()
+                    current_var = line.split("name:")[1].strip()
                     current_data = []
                     current_dims = None
-                elif 'type:' in line:
-                    current_type = line.split('type:')[1].strip()
-                elif 'ndims:' in line or 'rows:' in line or 'columns:' in line:
+                elif "type:" in line:
+                    current_type = line.split("type:")[1].strip()
+                elif "ndims:" in line or "rows:" in line or "columns:" in line:
                     continue
                 continue
-            
+
             # Parse dimensions
-            if current_dims is None and current_type == 'matrix':
+            if current_dims is None and current_type == "matrix":
                 try:
                     dims = [int(x) for x in line.split()]
                     if len(dims) >= 1:
@@ -76,9 +78,9 @@ def load_octave_text_file(file_path):
                         continue
                 except ValueError:
                     pass
-            
+
             # Parse data values
-            if line and not line.startswith('#'):
+            if line and not line.startswith("#"):
                 try:
                     values = [float(x) for x in line.split()]
                     current_data.extend(values)
@@ -88,28 +90,30 @@ def load_octave_text_file(file_path):
                         current_data.append(float(line))
                     except ValueError:
                         pass
-        
+
         # Save last variable
         if current_var is not None and current_data:
-            if current_type == 'matrix':
+            if current_type == "matrix":
                 arr = np.array(current_data)
                 if current_dims is not None and len(current_dims) > 1:
-                    arr = arr.reshape(current_dims, order='F')  # Fortran order for MATLAB compatibility
+                    arr = arr.reshape(
+                        current_dims, order="F"
+                    )  # Fortran order for MATLAB compatibility
                 data[current_var] = arr
-            elif current_type == 'scalar':
+            elif current_type == "scalar":
                 data[current_var] = current_data[0] if current_data else 0
-    
+
     return data
 
 
 def load_mat_file(file_path):
     """Load MAT file, handling v7, v7.3 (HDF5), and Octave text formats
-    
+
     Parameters
     ----------
     file_path : str
         Path to MAT file
-        
+
     Returns
     -------
     dict
@@ -120,14 +124,14 @@ def load_mat_file(file_path):
         return loadmat(file_path)
     except (ValueError, NotImplementedError, OSError):
         pass
-    
+
     # Try h5py (for MAT files v7.3)
     try:
         print(f"Trying to load {file_path} as HDF5 format (MATLAB v7.3)...")
         data = {}
-        with h5py.File(file_path, 'r') as f:
+        with h5py.File(file_path, "r") as f:
             for key in f.keys():
-                if not key.startswith('__'):
+                if not key.startswith("__"):
                     # Handle different data types
                     dataset = f[key]
                     if isinstance(dataset, h5py.Dataset):
@@ -147,13 +151,15 @@ def load_mat_file(file_path):
         return data
     except (OSError, Exception):
         pass
-    
+
     # Try Octave text format
     try:
         print(f"Trying to load {file_path} as Octave text format...")
         return load_octave_text_file(file_path)
     except Exception as e:
-        raise ValueError(f"Could not load file {file_path}. Tried MATLAB v7, v7.3 (HDF5), and Octave text formats. Error: {e}")
+        raise ValueError(
+            f"Could not load file {file_path}. Tried MATLAB v7, v7.3 (HDF5), and Octave text formats. Error: {e}"
+        )
 
 
 def main():
@@ -199,7 +205,7 @@ def main():
     # Load forward model
     print(f"Loading forward model from {args.forward_model}...")
     fwd_data = load_mat_file(args.forward_model)
-    
+
     # Try different possible keys for the forward matrix
     fwd = None
     for key in ["fwd", "forward", "leadfield", "L"]:
@@ -207,7 +213,7 @@ def main():
             fwd = fwd_data[key]
             print(f"Found forward matrix with key '{key}', shape: {fwd.shape}")
             break
-    
+
     if fwd is None:
         # Print available keys
         print("Available keys in forward model file:")
@@ -217,7 +223,9 @@ def main():
         raise ValueError("Could not find forward matrix in file")
 
     # Ensure forward matrix has correct shape (num_electrodes x num_regions)
-    if fwd.shape[1] > fwd.shape[0]:  # More columns than rows suggests correct orientation
+    if (
+        fwd.shape[1] > fwd.shape[0]
+    ):  # More columns than rows suggests correct orientation
         print(f"Forward matrix shape: {fwd.shape} (electrodes x regions)")
     else:
         print(f"Warning: Forward matrix shape {fwd.shape} may need transposing")
@@ -225,13 +233,13 @@ def main():
     # Load dataset metadata to determine length
     dataset_meta = load_mat_file(args.dataset_path)
     total_samples = dataset_meta["selected_region"].shape[0]
-    
+
     # Determine dataset length
     if args.dataset_len is None:
         dataset_len = total_samples
     else:
         dataset_len = min(args.dataset_len, total_samples)
-    
+
     print(f"\nDataset information:")
     print(f"  Total samples in metadata: {total_samples}")
     print(f"  Samples to extract: {dataset_len}")
@@ -242,7 +250,7 @@ def main():
         "use_spikes": True,
         "dataset_len": dataset_len,
     }
-    
+
     print("\nInitializing dataset with spikes data...")
     dataset = SpikeEEGBuild(
         data_root=args.dataset_path,
@@ -256,13 +264,15 @@ def main():
     # Extract and save each sample
     successful_saves = 0
     failed_saves = 0
-    
+
     print("Extracting and saving labeled data...")
-    for idx in tqdm(range(args.start_idx, min(args.start_idx + dataset_len, len(dataset)))):
+    for idx in tqdm(
+        range(args.start_idx, min(args.start_idx + dataset_len, len(dataset)))
+    ):
         try:
             # Get sample from dataset
             sample = dataset[idx]
-            
+
             # Prepare data to save
             save_data = {
                 "eeg_data": sample["data"],  # EEG sensor data (time x electrodes)
@@ -271,24 +281,24 @@ def main():
                 "snr": sample["snr"],  # SNR value
                 "index": idx,  # Original index
             }
-            
+
             # Save as MAT file
             output_filename = os.path.join(args.output_dir, f"sample_{idx:05d}.mat")
             savemat(output_filename, save_data)
             successful_saves += 1
-            
+
         except Exception as e:
             print(f"\nError processing sample {idx}: {e}")
             failed_saves += 1
             continue
 
     # Print summary
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("Extraction complete!")
     print(f"  Successfully saved: {successful_saves} samples")
     print(f"  Failed: {failed_saves} samples")
     print(f"  Output directory: {args.output_dir}")
-    print("="*60)
+    print("=" * 60)
 
     # Save extraction metadata
     metadata = {
@@ -307,4 +317,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
