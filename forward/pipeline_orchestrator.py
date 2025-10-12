@@ -17,12 +17,12 @@ import shutil
 import argparse
 import time
 from pathlib import Path
-from google.colab import auth
-from googleapiclient.discovery import build
+from dotenv import load_dotenv
 
-# Add parent directory to Python path to import copy_to_drive
-sys.path.append(str(Path(__file__).parent.parent))
-from copy_to_drive import upload_folder_to_drive
+
+from copy_to_drive import create_drive_service, upload_folder_to_drive
+
+
 
 
 class PipelineOrchestrator:
@@ -343,6 +343,8 @@ class PipelineOrchestrator:
 
             # Step 3: Delete raw data to save disk space (only if processing succeeded)
             self.delete_raw_data(region_id)
+
+            # Step 4: Upload processed data to Google Drive
             upload_folder_to_drive(self.processed_data_path / f"a{region_id}", self.destination_folder_id, self.drive_service)
 
             successful_regions.append(region_id)
@@ -376,9 +378,9 @@ class PipelineOrchestrator:
 
 
 def main():
-    auth.authenticate_user()
-    drive_service = build('drive', 'v3')
-    print("✅ Google Drive API connected.")
+    load_dotenv()
+
+    drive_service = create_drive_service()
 
     parser = argparse.ArgumentParser(
         description="DeepSIF Data Generation Pipeline Orchestrator",
