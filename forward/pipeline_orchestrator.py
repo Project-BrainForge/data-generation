@@ -292,12 +292,11 @@ class PipelineOrchestrator:
             print("✗ Timeout generating synthetic source data")
             return False
 
-    def run(self):
+    def run(self, m):
         """
         Run the complete pipeline
         """
-        mega = Mega()
-        m = mega.login("sithika.21@cse.mrt.ac.lk", "cCLH2p!aJw5vM6d")
+
         start_time = time.time()
 
         print("\n" + "=" * 80)
@@ -460,7 +459,7 @@ class PipelineOrchestrator:
         print("=" * 80 + "\n")
 
 
-def main():
+def main(m):
     parser = argparse.ArgumentParser(
         description="DeepSIF Data Generation Pipeline Orchestrator",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -518,8 +517,10 @@ Examples:
         leadfield_name=args.leadfield,
     )
 
-    orchestrator.run()
+    orchestrator.run(m)
 
 
 if __name__ == "__main__":
-    main()
+    mega = Mega()
+    m = mega.login("sithika.21@cse.mrt.ac.lk", "cCLH2p!aJw5vM6d")
+    main(m)
