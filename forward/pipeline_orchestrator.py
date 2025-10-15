@@ -428,7 +428,7 @@ class PipelineOrchestrator:
                 / "nmm_spikes"
                 / f"clip_info/iter2/iter_2_i_{region_id}.mat"
             )
-            os.remove(self.base_path / "source" / "nmm_spikes" / f"a{region_id}")
+            shutil.rmtree(self.base_path / "source" / "nmm_spikes" / f"a{region_id}")
 
             successful_regions.append(region_id)
 
