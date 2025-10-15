@@ -17,6 +17,9 @@ import shutil
 import argparse
 import time
 from pathlib import Path
+from mega import Mega
+import os
+from pathlib import Path
 
 
 class PipelineOrchestrator:
@@ -47,30 +50,35 @@ class PipelineOrchestrator:
     def check_processed_spikes_exist(self, region_id):
         """
         Check if processed spikes already exist for a specific region
-        
+
         Args:
             region_id: Region ID to check
-            
+
         Returns:
             True if processed spikes exist, False otherwise
         """
         region_path = self.processed_data_path / f"a{region_id}"
-        
+
         if not region_path.exists():
             return False
-        
+
         # Check if clip_info exists for all iterations
         # Looking for files like clip_info/iter0/iter_0_i_{region_id}.mat
         for iter_num in [0, 1, 2]:  # Check iterations 0, 1, 2
-            clip_info_file = self.processed_data_path / "clip_info" / f"iter{iter_num}" / f"iter_{iter_num}_i_{region_id}.mat"
+            clip_info_file = (
+                self.processed_data_path
+                / "clip_info"
+                / f"iter{iter_num}"
+                / f"iter_{iter_num}_i_{region_id}.mat"
+            )
             if not clip_info_file.exists():
                 return False
-        
+
         # Also check if there are some spike files
         spike_files = list(region_path.glob("nmm_*.mat"))
         if len(spike_files) == 0:
             return False
-            
+
         return True
 
     def check_raw_data_exists(self, region_id):
@@ -84,17 +92,19 @@ class PipelineOrchestrator:
             True if raw data exists, False otherwise
         """
         region_path = self.raw_data_path / f"a{region_id}"
-        
+
         if not region_path.exists():
             return False
-        
+
         # Check if at least one iteration file exists
         # Looking for files like mean_iter_0_a_iter_{region_id}_0.mat
         for iter_num in [0, 1, 2]:  # Check iterations 0, 1, 2
-            expected_file = region_path / f"mean_iter_{iter_num}_a_iter_{region_id}_0.mat"
+            expected_file = (
+                region_path / f"mean_iter_{iter_num}_a_iter_{region_id}_0.mat"
+            )
             if expected_file.exists():
                 return True
-        
+
         return False
 
     def run_generate_tvb_data(self, region_id):
@@ -110,7 +120,9 @@ class PipelineOrchestrator:
 
         # Check if raw data already exists
         if self.check_raw_data_exists(region_id):
-            print(f"✓ Raw data already exists for region {region_id}, skipping TVB generation")
+            print(
+                f"✓ Raw data already exists for region {region_id}, skipping TVB generation"
+            )
             return True
 
         print(f"Raw data not found for region {region_id}, generating TVB data...")
@@ -284,6 +296,8 @@ class PipelineOrchestrator:
         """
         Run the complete pipeline
         """
+        mega = Mega()
+        m = mega.login("pasindusankalpa599@gmail.com", "_izzBK7nf:Sd:7C")
         start_time = time.time()
 
         print("\n" + "=" * 80)
@@ -311,7 +325,9 @@ class PipelineOrchestrator:
 
             # Step 0: Check if processed spikes already exist
             if self.check_processed_spikes_exist(region_id):
-                print(f"✓ Processed spikes already exist for region {region_id}, skipping all processing steps")
+                print(
+                    f"✓ Processed spikes already exist for region {region_id}, skipping all processing steps"
+                )
                 successful_regions.append(region_id)
                 continue
 
@@ -331,8 +347,88 @@ class PipelineOrchestrator:
                 failed_regions.append(region_id)
                 continue
 
+            # save processed data to mega
+            # create a folder in mega
+            # if not m.find(f"source/nmm_spikes/a{region_id}"):
+            #     m.create_folder(f"source/nmm_spikes/a{region_id}")
+            for file in os.listdir(self.processed_data_path / f"a{region_id}"):
+                # folder = m.find(f"source/nmm_spikes/a{region_id}")
+                # print("folder ==========", folder)
+                m.upload(
+                    self.processed_data_path / f"a{region_id}" / file,
+                    dest_filename=f"nmm_spikes/a{region_id}/{file}",
+                )
+
+            # if not m.find("source/nmm_spikes/clip_info/iter0"):
+            #     m.create_folder("source/nmm_spikes/clip_info/iter0")
+            for file in os.listdir(
+                self.base_path / "source" / "nmm_spikes" / "clip_info/iter0"
+            ):
+                # folder = m.find(f"source/nmm_spikes/clip_info")
+                m.upload(
+                    self.base_path
+                    / "source"
+                    / "nmm_spikes"
+                    / "clip_info/iter0"
+                    / f"iter_0_i_{region_id}.mat",
+                    dest_filename=f"clip_info/iter0/iter_0_i_{region_id}.mat",
+                )
+
+            # if not m.find("source/nmm_spikes/clip_info/iter1"):
+            #     m.create_folder("source/nmm_spikes/clip_info/iter1")
+            for file in os.listdir(
+                self.base_path / "source" / "nmm_spikes" / "clip_info/iter1"
+            ):
+                # folder = m.find(f"source/nmm_spikes/clip_info")
+                m.upload(
+                    self.base_path
+                    / "source"
+                    / "nmm_spikes"
+                    / "clip_info/iter1"
+                    / f"iter_1_i_{region_id}.mat",
+                    dest_filename=f"clip_info/iter1/iter_1_i_{region_id}.mat",
+                )
+
+            # if not m.find("source/nmm_spikes/clip_info/iter2"):
+            #     m.create_folder(
+            #         "source/nmm_spikes/clip_info/iter2",
+            #     )
+            for file in os.listdir(
+                self.base_path / "source" / "nmm_spikes" / "clip_info/iter2"
+            ):
+                # folder = m.find(f"source/nmm_spikes/clip_info")
+                m.upload(
+                    self.base_path
+                    / "source"
+                    / "nmm_spikes"
+                    / "clip_info/iter2"
+                    / f"iter_2_i_{region_id}.mat",
+                    dest_filename=f"clip_info/iter2/iter_2_i_{region_id}.mat",
+                )
+
             # Step 3: Delete raw data to save disk space (only if processing succeeded)
             self.delete_raw_data(region_id)
+
+            # delete spikes from local
+            os.remove(
+                self.base_path
+                / "source"
+                / "nmm_spikes"
+                / f"clip_info/iter0/iter_0_i_{region_id}.mat"
+            )
+            os.remove(
+                self.base_path
+                / "source"
+                / "nmm_spikes"
+                / f"clip_info/iter1/iter_1_i_{region_id}.mat"
+            )
+            os.remove(
+                self.base_path
+                / "source"
+                / "nmm_spikes"
+                / f"clip_info/iter2/iter_2_i_{region_id}.mat"
+            )
+            os.remove(self.base_path / "source" / "nmm_spikes" / f"a{region_id}")
 
             successful_regions.append(region_id)
 
