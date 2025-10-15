@@ -297,7 +297,7 @@ class PipelineOrchestrator:
         Run the complete pipeline
         """
         mega = Mega()
-        m = mega.login("pasindusankalpa599@gmail.com", "_izzBK7nf:Sd:7C")
+        m = mega.login("sithika.21@cse.mrt.ac.lk", "cCLH2p!aJw5vM6d")
         start_time = time.time()
 
         print("\n" + "=" * 80)
