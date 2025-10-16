@@ -4,3 +4,4 @@ mne
 tvb
 scipy
 tqdm
+python-dotenv

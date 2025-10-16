@@ -20,6 +20,7 @@ from pathlib import Path
 from mega import Mega
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 
 class PipelineOrchestrator:
@@ -521,6 +522,18 @@ Examples:
 
 
 if __name__ == "__main__":
+    # Load environment variables from .env file
+    load_dotenv()
+
+    # Get credentials from environment variables
+    mega_email = os.getenv("MEGA_EMAIL")
+    mega_password = os.getenv("MEGA_PASSWORD")
+
+    if not mega_email or not mega_password:
+        print("Error: MEGA_EMAIL and MEGA_PASSWORD must be set in .env file")
+        sys.exit(1)
+
     mega = Mega()
-    m = mega.login("sithika.21@cse.mrt.ac.lk", "cCLH2p!aJw5vM6d")
+    print("mega cred", mega_email, mega_password)
+    m = mega.login(mega_email, mega_password)
     main(m)
