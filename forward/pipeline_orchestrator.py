@@ -21,6 +21,9 @@ from mega import Mega
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from kaggle_secrets import UserSecretsClient
+
+
 
 
 class PipelineOrchestrator:
@@ -524,10 +527,11 @@ Examples:
 if __name__ == "__main__":
     # Load environment variables from .env file
     load_dotenv()
+    user_secrets = UserSecretsClient()
 
     # Get credentials from environment variables
-    mega_email = os.getenv("MEGA_EMAIL")
-    mega_password = os.getenv("MEGA_PASSWORD")
+    mega_email = user_secrets.get_secret("MEGA_EMAIL")
+    mega_password = user_secrets.get_secret("MEGA_PASSWORD")
 
     if not mega_email or not mega_password:
         print("Error: MEGA_EMAIL and MEGA_PASSWORD must be set in .env file")
