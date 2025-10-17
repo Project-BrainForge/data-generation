@@ -534,6 +534,5 @@ if __name__ == "__main__":
         sys.exit(1)
 
     mega = Mega()
-    print("mega cred", mega_email, mega_password)
     m = mega.login(mega_email, mega_password)
     main(m)
